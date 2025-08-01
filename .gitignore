@@ -1,0 +1,43 @@
+# Dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# Testing
+/coverage
+
+# Production
+/build
+/dist
+/tmp
+
+# Misc
+.DS_Store
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.next
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Editor directories and files
+.idea
+.vscode
+*.iml
+*.iws
+*.ipr
+
+# Specific to this project structure if sub-folders also have node_modules/build
+/agent/node_modules
+/agent/dist
+/agent/build
+/agent-js/node_modules
+/agent-js/dist
+/agent-js/build
+/ui/node_modules
+/ui/dist
+/ui/build
