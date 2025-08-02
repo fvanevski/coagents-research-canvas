@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "@copilotkit/react-ui/styles.css";
 import "./globals.css";
+import { ReactNode } from "react";
+import { CopilotKit } from "@copilotkit/react-core"; 
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -26,11 +28,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
+      <body>
+        {/* Make sure to use the URL you configured in the previous step */}
+        <CopilotKit runtimeUrl="/api/copilotkit">
+          {children}
+        </CopilotKit>
       </body>
     </html>
   );
 }
+

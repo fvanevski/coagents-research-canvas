@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  useCoAgent,
   useCoAgentStateRender,
   useCopilotAction,
 } from "@copilotkit/react-core";
@@ -12,9 +13,20 @@ import { EditResourceDialog } from "./EditResourceDialog";
 import { AddResourceDialog } from "./AddResourceDialog";
 import { Resources } from "./Resources";
 import { AgentState, Resource } from "@/lib/types";
+import { useModelSelectorContext } from "@/lib/model-selector-provider";
 
-export function ResearchCanvas({ state, setState }: { state: AgentState, setState: (state: AgentState) => void }) {
+export function ResearchCanvas() {
+  const { model, agent } = useModelSelectorContext();
+
+  const { state, setState } = useCoAgent<AgentState>({
+    name: agent,
+    initialState: {
+      model,
+    },
+  });
+
   useCoAgentStateRender({
+    name: agent,
     render: ({ state, nodeName, status }) => {
       if (!state.logs || state.logs.length === 0) {
         return null;

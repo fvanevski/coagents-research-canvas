@@ -1,24 +1,35 @@
-import { CopilotRuntime, langGraphPlatformEndpoint } from "@copilotkit/runtime";
-import { copilotRuntimeNextJSAppRouterEndpoint } from "@copilotkit/runtime";
+import {
+  CopilotRuntime,
+  OpenAIAdapter,
+  copilotRuntimeNextJSAppRouterEndpoint,
+  LangGraphAgent,
+  LangGraphHttpAgent,
+} from "@copilotkit/runtime";
+import OpenAI from "openai";
+import { NextRequest } from "next/server";
+ 
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const llmAdapter = new OpenAIAdapter({ openai } as any);
+const langsmithApiKey = process.env.LANGSMITH_API_KEY as string;
+
+const deploymentUrl = process.env.deplomentUrl || "http://localhost:3000/";
 
 const runtime = new CopilotRuntime({
-  remoteEndpoints: [
-    langGraphPlatformEndpoint({
-      deploymentUrl: "http://localhost:8000",
-      agents: [
-        {
-          name: 'research_agent',
-          description: 'A research assistant that can help with planning trips.',
-        }
-      ]
-    }),
-  ],
-});
+      agents: {
+        'research_agent': new LangGraphAgent({
+          deploymentUrl,
+          langsmithApiKey,
+          graphId: 'research_agent',
+        }),
+      }
+  })
 
-export const {
-  handleRequest: POST,
-  fetchServerSideProps,
-} = copilotRuntimeNextJSAppRouterEndpoint({
-  runtime,
-  endpoint: "/api/copilotkit",
-});
+export const POST = async (req: NextRequest) => {
+  const { handleRequest } = copilotRuntimeNextJSAppRouterEndpoint({
+    runtime,
+    serviceAdapter: llmAdapter,
+    endpoint: "/",
+  });
+
+  return handleRequest(req);
+} 

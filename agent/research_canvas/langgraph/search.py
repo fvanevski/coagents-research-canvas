@@ -11,10 +11,12 @@ from pydantic import BaseModel, Field
 from langchain_core.runnables import RunnableConfig
 from langchain_core.messages import AIMessage, ToolMessage, SystemMessage
 from langchain.tools import tool
-from tavily import TavilyClient
 from copilotkit.langgraph import copilotkit_emit_state, copilotkit_customize_config
 from research_canvas.langgraph.state import AgentState
 from research_canvas.langgraph.model import get_model
+
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+GOOGLE_CSE_ID = os.getenv("GOOGLE_CSE_ID")
 
 class ResourceInput(BaseModel):
     """A resource with a short description"""
@@ -26,8 +28,39 @@ class ResourceInput(BaseModel):
 def ExtractResources(resources: List[ResourceInput]): # pylint: disable=invalid-name,unused-argument
     """Extract the 3-5 most relevant resources from a search result."""
 
+async def async_google_search(query: str, session: aiohttp.ClientSession) -> Dict[str, Any]:
+    """Asynchronous wrapper for Google Search API"""
+    if not GOOGLE_API_KEY or not GOOGLE_CSE_ID:
+        return {"error": "Google API key or CSE ID is not set."}
 
+    url = "https://www.googleapis.com/customsearch/v1"
+    params = {
+        "key": GOOGLE_API_KEY,
+        "cx": GOOGLE_CSE_ID,
+        "q": query,
+        "num": 10,
+    }
 
+    try:
+        async with session.get(url, params=params) as response:
+            response.raise_for_status()
+            results = await response.json()
+
+            if "items" not in results:
+                return {"error": "No results found."}
+
+            formatted_results = []
+            for item in results["items"]:
+                formatted_results.append(
+                    {
+                        "title": item.get("title"),
+                        "url": item.get("link"),
+                        "description": item.get("snippet"),
+                    }
+                )
+            return formatted_results
+    except aiohttp.ClientError as e:
+        return {"error": f"Error performing search: {e}"}
 
 
 async def search_node(state: AgentState, config: RunnableConfig):
@@ -51,17 +84,17 @@ async def search_node(state: AgentState, config: RunnableConfig):
 
     search_results = []
 
-    # Use asyncio.gather to run multiple searches in parallel
-    tasks = [async_google_search(query) for query in queries]
-    results = await asyncio.gather(*tasks, return_exceptions=True)
-    
+    async with aiohttp.ClientSession() as session:
+        tasks = [async_google_search(query, session) for query in queries]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
     for i, result in enumerate(results):
         if isinstance(result, Exception):
             # Handle exceptions
             search_results.append({"error": str(result)})
         else:
             search_results.append(result)
-        
+
         state["logs"][i]["done"] = True
         await copilotkit_emit_state(config, state)
 

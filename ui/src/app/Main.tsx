@@ -1,14 +1,16 @@
 import { ResearchCanvas } from "@/components/ResearchCanvas";
+import { useModelSelectorContext } from "@/lib/model-selector-provider";
 import { AgentState } from "@/lib/types";
 import { useCoAgent } from "@copilotkit/react-core";
 import { CopilotChat } from "@copilotkit/react-ui";
 import { useCopilotChatSuggestions } from "@copilotkit/react-ui";
 
 export default function Main() {
+  const { model, agent } = useModelSelectorContext();
   const { state, setState } = useCoAgent<AgentState>({
-    name: "research_agent",
+    name: agent,
     initialState: {
-      model: "vllm",
+      model,
       research_question: "",
       resources: [],
       report: "",
@@ -16,7 +18,9 @@ export default function Main() {
     },
   });
 
-  
+  useCopilotChatSuggestions({
+    instructions: "Lifespan of penguins",
+  });
 
   return (
     <>
@@ -29,7 +33,7 @@ export default function Main() {
         style={{ height: "calc(100vh - 60px)" }}
       >
         <div className="flex-1 overflow-hidden">
-          <ResearchCanvas state={state} setState={setState} />
+          <ResearchCanvas />
         </div>
         <div
           className="w-[500px] h-full flex-shrink-0"

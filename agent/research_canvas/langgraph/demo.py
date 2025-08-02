@@ -54,11 +54,6 @@ sdk = CopilotKitRemoteEndpoint(
             description="Research agent.",
             graph=graph,
         ),
-        LangGraphAgent(
-            name="research_agent_google_genai",
-            description="Research agent.",
-            graph=graph
-        ),
     ],
 )
 
@@ -77,7 +72,7 @@ def main():
     port = int(os.getenv("PORT", "8000"))
     uvicorn.run(
         "research_canvas.langgraph.demo:app",
-        host="0.0.0.0",
+        host="localhost",
         port=port,
         reload=True,
         reload_dirs=(

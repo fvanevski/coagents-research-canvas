@@ -1,22 +1,73 @@
 "use client";
 
-import { createContext, useContext } from "react";
+import React from "react";
+import { createContext, useContext, useState, ReactNode } from "react";
 
-export type AgentState = {
-  model?: string;
-  research_question?: string;
-  resources?: Resource[];
-  report?: string;
-  logs?: Log[];
+type ModelSelectorContextType = {
+  model: string;
+  setModel: (model: string) => void;
+  agent: string;
+  lgcDeploymentUrl?: string | null;
+  hidden: boolean;
+  setHidden: (hidden: boolean) => void;
 };
 
-export type Resource = {
-  url: string;
-  title: string;
-  description: string;
+const ModelSelectorContext = createContext<
+  ModelSelectorContextType | undefined
+>(undefined);
+
+export const ModelSelectorProvider = ({
+  children,
+}: {
+  children: ReactNode;
+}) => {
+  const model =
+    globalThis.window === undefined
+      ? "openai"
+      : new URL(window.location.href).searchParams.get("coAgentsModel") ??
+        "openai";
+  const [hidden, setHidden] = useState<boolean>(false);
+
+  const setModel = (model: string) => {
+    const url = new URL(window.location.href);
+    url.searchParams.set("coAgentsModel", model);
+    window.location.href = url.toString();
+  };
+
+  const lgcDeploymentUrl =
+    globalThis.window === undefined
+      ? null
+      : new URL(window.location.href).searchParams.get("lgcDeploymentUrl");
+
+  let agent = "research_agent";
+  if (model === "google_genai") {
+    agent = "research_agent_google_genai";
+  } else if (model === "crewai") {
+    agent = "research_agent_crewai";
+  }
+
+  return (
+    <ModelSelectorContext.Provider
+      value={{
+        model,
+        agent,
+        lgcDeploymentUrl,
+        hidden,
+        setModel,
+        setHidden,
+      }}
+    >
+      {children}
+    </ModelSelectorContext.Provider>
+  );
 };
 
-export type Log = {
-  message: string;
-  done: boolean;
+export const useModelSelectorContext = () => {
+  const context = useContext(ModelSelectorContext);
+  if (context === undefined) {
+    throw new Error(
+      "useModelSelectorContext must be used within a ModelSelectorProvider"
+    );
+  }
+  return context;
 };

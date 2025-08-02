@@ -40,7 +40,4 @@ if os.environ.get("LANGGRAPH_API", "false").lower() == "true":
     graph = workflow.compile(**compile_kwargs)
 else:
     # For CopilotKit and other contexts, use MemorySaver
-    from langgraph.checkpoint.memory import MemorySaver
-    memory = MemorySaver()
-    compile_kwargs["checkpointer"] = memory
     graph = workflow.compile(**compile_kwargs)
